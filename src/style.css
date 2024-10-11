@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .focusable {
+    @apply focus-visible:border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700;
+  }
+
+  .input {
+    @apply block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white;
+  }
+
+  .button {
+    @apply block w-auto rounded-md bg-slate-900 px-3 py-2 text-center text-slate-200;
+  }
+}

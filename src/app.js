@@ -1,43 +1,101 @@
+// const SYSEX_CONVERT_VANILLA_TO_SE = "F0 00 20 6B 04 01 75 01 3E 01 F7";
+// const SYSEX_CONVERT_SE_TO_VANILLA = "F0 00 20 6B 04 01 46 01 3E 00 F7";
+
 export default () => {
   return {
-    MIDI_CC_PARAMS: {
-      "Receive Channel": {
+    parameters: {
+      receiveChannel: {
         cc: 102,
-        min: 1,
-        max: 17,
-        options: [...Array(16)].map((_, i) => `${i + 1}`).concat(["All"]),
+        options: [
+          ...Array.from({ length: 16 }, (_, i) => ({
+            label: `${i + 1}`,
+            value: i + 1,
+          })),
+          { label: "All", value: 17 },
+        ],
       },
-      "Send Channel": {
+      sendChannel: {
         cc: 103,
-        min: 1,
-        max: 16,
-        options: [...Array(16)].map((_, i) => `${i + 1}`),
+        options: Array.from({ length: 16 }, (_, i) => ({
+          label: `${i + 1}`,
+          value: i + 1,
+        })),
       },
-      "Seq Retrig": { cc: 104, options: ["Reset", "Legato", "None"] },
-      "Seq Play Mode": { cc: 105, options: ["Hold", "Note On"] },
-      "Next Seq Mode": {
-        cc: 106,
-        options: ["End", "Instant Reset", "Instant Continuous"],
+      // seqRetrig: { cc: 104, options: ["Reset", "Legato", "None"] },
+      // seqPlayMode: { cc: 105, options: ["Hold", "Note On"] },
+      // nextSeqMode: { cc: 106, options: ["End", "Instant Reset", "Instant Continuous"] },
+      // seqStepSize: { cc: 107, options: ["1/4", "1/8", "1/16", "1/32"] },
+      syncSource: {
+        cc: 108,
+        options: [
+          { label: "Auto", value: 0 },
+          { label: "Int", value: 42 },
+          { label: "Ext", value: 84 },
+        ],
       },
-      "Seq Step Size": {
-        cc: 107,
-        options: ["1/4", "1/8", "1/16", "1/32"],
+      envLegatoMode: {
+        cc: 109,
+        options: [
+          { label: "Off", value: 0 },
+          { label: "On", value: 64 },
+        ],
       },
-      "Sync Source": { cc: 108, options: ["Auto", "Int", "Ext"] },
-      "Env Legato Mode": { cc: 109, options: ["Off", "On"] },
-      "LFO Retrig Mode": { cc: 110, options: ["Off", "On"] },
-      "Note Priority": { cc: 111, options: ["Last", "Low", "High"] },
-      "Velocity Curve": { cc: 112, options: ["Lin", "Log", "Anti Log"] },
-      "Gate Length": { cc: 113, options: ["Short", "Med", "Long"] },
-      "Seq Step/Gate Mode": { cc: 114, options: ["Clk", "Gate/Tap"] },
-      "Audio In Threshold": { cc: 115, options: ["Low", "Mid", "High"] },
-      "Aftertouch Curve": {
+      lfoRetrigMode: {
+        cc: 110,
+        options: [
+          { label: "Off", value: 0 },
+          { label: "On", value: 64 },
+        ],
+      },
+      notePriority: {
+        cc: 111,
+        options: [
+          { label: "Last", value: 0 },
+          { label: "Low", value: 42 },
+          { label: "High", value: 84 },
+        ],
+      },
+      velocityCurve: {
+        cc: 112,
+        options: [
+          { label: "Lin", value: 0 },
+          { label: "Log", value: 42 },
+          { label: "Anti Log", value: 84 },
+        ],
+      },
+      // gateLength: { cc: 113, options: ["Short", "Med", "Long"] },
+      // seqStepGateMode: { cc: 114, options: ["Clk", "Gate/Tap"] },
+      audioInThreshold: {
+        cc: 115,
+        options: [
+          { label: "Low", value: 0 },
+          { label: "Mid", value: 42 },
+          { label: "High", value: 84 },
+        ],
+      },
+      aftertouchCurve: {
         cc: 116,
-        options: ["Exponential", "Logarithmic", "Linear"],
+        options: [
+          { label: "Exponential", value: 0 },
+          { label: "Logarithmic", value: 42 },
+          { label: "Linear", value: 83 },
+        ],
       },
-      "Local ON/OFF": { cc: 122, options: ["Off", "On"] },
+      arpeggiatorHold: {
+        cc: 117,
+        options: [
+          { label: "Off", value: 0 },
+          { label: "On", value: 64 },
+        ],
+      },
+      localOnOff: {
+        cc: 122,
+        options: [
+          { label: "Off", value: 0 },
+          { label: "On", value: 127 },
+        ],
+      },
     },
-
     sequences: [
       "60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60",
       "60 60 60 48 60 60 60 72 60 60 60 48 60 60 72 48",
@@ -56,17 +114,100 @@ export default () => {
     selectedOutput: "",
     midiAccess: null,
 
+    consoleOpen: true,
+    logMessages: [],
+    clearLog() {
+      this.logMessages = [];
+
+      this.logToWindow(`[DEBUG] ---------- Cleared log ----------`, "info");
+    },
+    getMinNoteWithOctave(sequence) {
+      const minNote = Math.min(
+        ...sequence
+          .split(" ")
+          .filter((n) => n !== "x")
+          .map(Number),
+      );
+      return Math.floor(minNote / 12) * 12;
+    },
+
+    getMaxNoteWithOctave(sequence) {
+      const maxNote = Math.max(
+        ...sequence
+          .split(" ")
+          .filter((n) => n !== "x")
+          .map(Number),
+      );
+      const minNoteWithOctave = this.getMinNoteWithOctave(sequence);
+      return Math.max(minNoteWithOctave + 11, maxNote);
+    },
+
+    getNoteRange(sequence) {
+      const minNote = this.getMinNoteWithOctave(sequence);
+      const maxNote = this.getMaxNoteWithOctave(sequence);
+      const noteNames = [
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B",
+      ];
+
+      let notes = [];
+      for (let i = maxNote; i >= minNote; i--) {
+        const octave = Math.floor(i / 12) - 1;
+        const noteName = noteNames[i % 12];
+        notes.push(`${noteName}${octave}`);
+      }
+
+      return notes;
+    },
+
+    calculateNotePosition(note, sequence) {
+      if (note === "x") return 0;
+      const minNote = this.getMinNoteWithOctave(sequence);
+      const maxNote = this.getMaxNoteWithOctave(sequence);
+      const totalRange = maxNote - minNote;
+      return ((Number(note) - minNote) / totalRange) * 100;
+    },
+
+    logToWindow(message, type = "info") {
+      const entry = {
+        timestamp: new Date().toISOString(),
+        message: message,
+        type: type,
+      };
+      this.logMessages.push(entry);
+
+      this.scrollToBottom();
+    },
+
+    scrollToBottom() {
+      if (this.$refs.logWindow) {
+        this.$refs.logWindow.scrollTop = this.$refs.logWindow?.scrollHeight;
+      }
+    },
+
     init() {
       if (navigator.requestMIDIAccess) {
         navigator
-          .requestMIDIAccess()
+          .requestMIDIAccess({
+            sysex: true,
+          })
           .then(this.onMIDISuccess.bind(this), this.onMIDIFailure.bind(this));
       } else {
-        console.log("WebMIDI is not supported in this browser.");
+        this.logToWindow("WebMIDI is not supported in this browser.", "error");
       }
 
       // Initialize paramValues with default values
-      for (const [name, param] of Object.entries(this.MIDI_CC_PARAMS)) {
+      for (const [name, param] of Object.entries(this.parameters)) {
         this.paramValues[name] = param.options
           ? param.options[0]
           : param.min || 0;
@@ -78,7 +219,7 @@ export default () => {
       this.updateDeviceLists();
 
       midiAccess.onstatechange = (event) => {
-        console.log("MIDI state change:", event);
+        this.logToWindow("MIDI state change: " + event.port.name, "info");
         this.updateDeviceLists();
       };
     },
@@ -106,7 +247,7 @@ export default () => {
     },
 
     onMIDIFailure() {
-      console.log("Could not access your MIDI devices.");
+      this.logToWindow("Could not access your MIDI devices.", "error");
     },
 
     handleInputChange() {
@@ -114,8 +255,7 @@ export default () => {
         (device) => device.id === this.selectedInput,
       );
       if (selectedDevice) {
-        console.log("Selected MIDI input:", selectedDevice.name);
-        // Add any input-specific logic here if needed
+        this.logToWindow(`Input changed: ${selectedDevice.name}`, "info");
       }
     },
 
@@ -124,8 +264,7 @@ export default () => {
         (device) => device.id === this.selectedOutput,
       );
       if (selectedDevice) {
-        console.log("Selected MIDI output:", selectedDevice.name);
-        // We don't need to store the output device, as we'll use it directly in sendMIDIMessage
+        this.logToWindow(`Output changed: ${selectedDevice.name}`, "info");
       }
     },
 
@@ -136,12 +275,12 @@ export default () => {
       if (output) {
         output.send([0xb0, cc, value]); // Channel 1 CC message
       } else {
-        console.log("No MIDI output selected");
+        this.logToWindow("No MIDI output selected", "warning");
       }
     },
 
     handleParamChange(param, value) {
-      const { cc, min = 0, max = 127, options } = this.MIDI_CC_PARAMS[param];
+      const { cc, min = 0, max = 127, options } = this.parameters[param];
       let midiValue;
 
       if (options) {
