@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiniBrute SE MIDI Controller</title>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="./main.js" defer></script>
+  </head>
+  <body class="bg-slate-950 p-8 text-slate-200">
+    <div x-data="app">
+      <header class="mb-8 flex flex-row items-center justify-between">
+        <h1 class="text-xl font-bold text-blue-400">
+          MiniBrute SE MIDI Controller
+        </h1>
+        <div class="flex flex-row justify-end gap-6">
+          <div>
+            <select
+              id="midiInput"
+              x-model="selectedInput"
+              @change="handleInputChange"
+              class="block w-full rounded-md bg-slate-900 py-2 pl-3 pr-10 text-white"
+            >
+              <option value="">Select Input</option>
+              <template x-for="input in midiInputs" :key="input.id">
+                <option :value="input.id" x-text="input.name"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <select
+              id="midiOutput"
+              x-model="selectedOutput"
+              @change="handleOutputChange"
+              class="block w-full rounded-md bg-slate-900 py-2 pl-3 pr-10 text-white"
+            >
+              <option value="">Select Output</option>
+              <template x-for="output in midiOutputs" :key="output.id">
+                <option :value="output.id" x-text="output.name"></option>
+              </template>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid grid-cols-2 gap-8">
+        <!-- MIDI Channel Select Section -->
+        <section class="rounded-lg bg-slate-900 p-6">
+          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+            MIDI Channel Select
+          </h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Transmit Channel
+              </label>
+              <select
+                x-model="paramValues['Send Channel']"
+                @change="handleParamChange('Send Channel', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Send Channel'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets the MIDI channel for outgoing messages. Choose between
+                channels 1-16.
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Receive Channel
+              </label>
+              <select
+                x-model="paramValues['Receive Channel']"
+                @change="handleParamChange('Receive Channel', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Receive Channel'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets the MIDI channel the instrument will respond to. Options:
+                1-16, All (responds to any channel).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Keyboard Parameters Section -->
+        <section class="rounded-lg bg-slate-900 p-6">
+          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+            Keyboard Parameters
+          </h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Audio Gate Threshold
+              </label>
+              <select
+                x-model="paramValues['Audio In Threshold']"
+                @change="handleParamChange('Audio In Threshold', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Audio In Threshold'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets the audio level required to trigger the envelopes. Options:
+                High, Medium, Low.
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                LFO Key Retrigger
+              </label>
+              <select
+                x-model="paramValues['LFO Retrig Mode']"
+                @change="handleParamChange('LFO Retrig Mode', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['LFO Retrig Mode'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Determines if the LFO resets when a key is pressed. Options: On
+                (resets), Off (runs freely).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sequencer Control Section -->
+        <section class="rounded-lg bg-slate-900 p-6">
+          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+            Sequencer Control
+          </h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="mb-2 block text-sm font-medium">Play Mode</label>
+              <select
+                x-model="paramValues['Seq Play Mode']"
+                @change="handleParamChange('Seq Play Mode', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Seq Play Mode'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets how the sequencer starts: Hold (on trigger), Note On
+                (starts when a key is pressed).
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Next Sequence Mode
+              </label>
+              <select
+                x-model="paramValues['Next Seq Mode']"
+                @change="handleParamChange('Next Seq Mode', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Next Seq Mode'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets how sequences change: End (waits for current sequence to
+                end), Instant Reset (switches immediately).
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">Sync Source</label>
+              <select
+                x-model="paramValues['Sync Source']"
+                @change="handleParamChange('Sync Source', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Sync Source'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Determines how the sequencer syncs: Auto (switches based on
+                external clock), Int (internal clock), Ext (external clock).
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">Step Size</label>
+              <select
+                x-model="paramValues['Seq Step Size']"
+                @change="handleParamChange('Seq Step Size', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Seq Step Size'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Determines the step resolution for the sequencer: 1/4, 1/8,
+                1/16, 1/32.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Module Parameters Section -->
+        <section class="rounded-lg bg-slate-900 p-6">
+          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+            Module Parameters
+          </h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Note Priority
+              </label>
+              <select
+                x-model="paramValues['Note Priority']"
+                @change="handleParamChange('Note Priority', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Note Priority'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets note priority when more than one key is pressed. Options:
+                High, Low, Last.
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Velocity Response
+              </label>
+              <select
+                x-model="paramValues['Velocity Curve']"
+                @change="handleParamChange('Velocity Curve', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Velocity Curve'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets the velocity curve. Options: Lin (linear), Log
+                (logarithmic), Anti Log (exponential).
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Envelope Legato Mode
+              </label>
+              <select
+                x-model="paramValues['Env Legato Mode']"
+                @change="handleParamChange('Env Legato Mode', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Env Legato Mode'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Enables legato mode. On: envelopes are not retriggered. Off:
+                envelopes are retriggered on each key press.
+              </p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium">
+                Aftertouch Response
+              </label>
+              <select
+                x-model="paramValues['Aftertouch Curve']"
+                @change="handleParamChange('Aftertouch Curve', $event.target.value)"
+                class="block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white"
+              >
+                <template
+                  x-for="option in MIDI_CC_PARAMS['Aftertouch Curve'].options"
+                  :key="option"
+                >
+                  <option :value="option" x-text="option"></option>
+                </template>
+              </select>
+              <p class="mt-2 text-xs text-slate-400">
+                Sets the aftertouch curve. Options: Exponential, Logarithmic,
+                Linear.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="col-span-full">
+          <h2 class="mb-4 text-2xl font-semibold text-slate-300">Sequences</h2>
+          <div class="grid grid-cols-3 gap-4">
+            <template x-for="(sequence, index) in sequences" :key="index">
+              <div class="rounded-lg bg-slate-800 p-4">
+                <h3
+                  class="mb-2 text-lg font-medium"
+                  x-text="`Sequence ${index + 1}`"
+                ></h3>
+                <div class="relative h-60 overflow-x-auto bg-slate-700">
+                  <div
+                    class="absolute inset-y-0 left-0 flex w-12 flex-col border-r border-slate-600 bg-slate-800"
+                  >
+                    <template
+                      x-for="note in ['C5', 'B4', 'A4', 'G4', 'F4', 'E4', 'D4', 'C4']"
+                    >
+                      <div
+                        class="flex flex-1 items-center justify-center border-b border-slate-600 text-xs"
+                        x-text="note"
+                      ></div>
+                    </template>
+                  </div>
+                  <div class="ml-12 flex h-full">
+                    <template
+                      x-for="(note, noteIndex) in sequence.split(' ')"
+                      :key="noteIndex"
+                    >
+                      <div class="relative h-full w-6 flex-none">
+                        <template x-if="note !== 'x'">
+                          <div
+                            class="absolute left-0 right-0 bg-blue-500"
+                            :style="`height: ${100/8}%; bottom: ${(note - 60) * (100/8)}%;`"
+                          ></div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
