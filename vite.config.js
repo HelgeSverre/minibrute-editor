@@ -8,7 +8,9 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    copyPublicDir: true,
   },
+  publicDir: "../public",
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),
