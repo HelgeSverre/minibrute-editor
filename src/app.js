@@ -432,68 +432,87 @@ export default () => ({
 
   requestSequence(input, output, sequenceIndex) {
     return new Promise((resolve, reject) => {
+      // Initialize variables to store the sequence and track responses
       let fullSequence = "";
       let receivedResponses = 0;
 
+      // Handler function for incoming MIDI messages
       const handleMessage = (event) => {
         const data = event.data;
-        if (
-          data[0] !== 0xf0 ||
-          data[1] !== 0x00 ||
-          data[2] !== 0x20 ||
-          data[3] !== 0x6b
-        ) {
-          this.logToWindow("Received non-Sysex message", "debug");
-          return;
-        } // Not the expected message
 
+        // Check if the message is a SysEx message from the expected device (Arturia MiniBrute)
+        if (
+          data[0] !== 0xf0 || // SysEx start
+          data[1] !== 0x00 || // Manufacturer ID (part 1)
+          data[2] !== 0x20 || // Manufacturer ID (part 2)
+          data[3] !== 0x6b // Manufacturer ID (part 3, Arturia)
+        ) {
+          if (data === 0xfe) {
+            // Active Sensing message, ignore
+          return;
+          }
+
+          this.logToWindow("Received non-Sysex message: " + data, "debug");
+          return;
+        }
+
+        // Check if the message contains sequence data (0x23 indicates sequence data)
         if (data[7] === 0x23) {
-          // Response with sequence data
+          // Extract sequence data from the message
           const sequence = Array.from(data.slice(12, 44))
             .map((note) => (note === 0 ? "x" : note.toString()))
             .join(" ");
+
+          // Add the received sequence part to the full sequence
           fullSequence += sequence + " ";
           receivedResponses++;
 
+          // If we've received both parts of the sequence
           if (receivedResponses === 2) {
-            // We've received both parts of the sequence
             cleanup();
-            resolve(fullSequence.trim());
+            resolve(fullSequence.trim()); // Resolve the promise with the complete sequence
           }
         }
       };
 
+      // Function to clean up event listeners and timeouts
       const cleanup = () => {
         clearTimeout(timeout);
         input.removeEventListener("midimessage", handleMessage);
       };
 
+      // Set a timeout to reject the promise if we don't receive a response in time
       const timeout = setTimeout(() => {
         cleanup();
         reject(new Error(`Timeout waiting for sequence ${sequenceIndex + 1}`));
-      }, 5000);
+      }, 5000); // 5 second timeout
 
+      // Add the message handler to the MIDI input
       input.addEventListener("midimessage", handleMessage);
 
-      // Send two request messages for each sequence
+      // Send two request messages for each sequence (the sequence is sent in two parts)
       for (let j = 0; j < 2; j++) {
-        const sequenceCounter = 0x60 + sequenceIndex * 2 + j;
+        const sequenceCounter = 0x60 + (sequenceIndex + 1) * 2 + j;
+
+        // Construct the SysEx message to request the sequence part
         const requestMessage = [
-          0xf0,
+          0xf0, // SysEx start
           0x00,
           0x20,
-          0x6b,
+          0x6b, // Manufacturer ID (Arturia)
           0x04,
-          0x01,
-          sequenceCounter,
-          0x03,
-          0x3b,
-          Math.floor(sequenceIndex / 2),
-          j * 0x20,
-          0x20,
-          0xf7,
+          0x01, // Product ID (MiniBrute)
+          sequenceCounter, // Sequence counter
+          0x03, // Message type/command (0x03 for "sequence data request" probably..)
+          0x3b, // Parameter ID (sequence data)
+          sequenceIndex, // Sequence index (0-5, aka which sequence to get)
+          j * 0x20, // Offset (0 for first part, 32 for second part, totaling 64 steps)
+          0x20, // Length (32 in decimal, 0x20 in hex)
+          0xf7, // SysEx end
         ];
+
         output.send(requestMessage);
+
         this.logToWindow(
           `Sent request for sequence ${sequenceIndex + 1}, part ${j + 1}`,
           "debug",

@@ -346,7 +346,7 @@
                   <div class="mb-4 bg-black p-2">
                     <template x-for="group in 4">
                       <pre
-                        class="overflow-scroll whitespace-pre-wrap border-dashed border m-2 border-white/20 p-1 font-mono text-sm leading-none text-white"
+                        class="my-2 overflow-scroll whitespace-pre-wrap border border-dashed border-white/20 p-1 font-mono text-sm leading-none text-white"
                         x-text="sequence.split(' ').slice((group - 1) * 16, group * 16).map((note) =>  note.padStart(2, ' ')).join(' ')"
                       ></pre>
                     </template>
@@ -358,7 +358,7 @@
                     >
                       <template x-for="note in getNoteRange(sequence)">
                         <div
-                          class="flex w-full flex-1 items-center justify-center border-b border-slate-800 bg-slate-900 px-2 text-center font-mono text-[10px]"
+                          class="flex h-8 w-full flex-1 items-center justify-center border-b border-slate-800 bg-slate-900 px-2 text-center font-mono text-[10px]"
                           x-text="note"
                         ></div>
                       </template>
