@@ -65,11 +65,9 @@
             <button x-on:click="identify" class="button focusable">
               Identify
             </button>
-            <button x-on:click="playNote()" class="button focusable">
-              Play note
-            </button>
-            <button x-on:click="playNotes()" class="button focusable">
-              Play Sequence
+
+            <button x-on:click="clearSequences" class="button focusable">
+              Clear Sequences
             </button>
             <button x-on:click="loadSequences" class="button focusable">
               Load Sequences
@@ -85,7 +83,7 @@
             >
               <option value="">Select Input</option>
               <template x-for="input in midiInputs" :key="`input-${input.id}`">
-                <option :value="input.id" x-text="input.name"></option>
+                <option x-bind:value="input.id" x-text="input.name"></option>
               </template>
             </select>
             <select
@@ -99,206 +97,234 @@
                 x-for="output in midiOutputs"
                 :key="`output-${output.id}`"
               >
-                <option :value="output.id" x-text="output.name"></option>
+                <option x-bind:value="output.id" x-text="output.name"></option>
               </template>
             </select>
           </div>
         </nav>
       </header>
 
-      <main class="mb-12 grid grid-cols-2 gap-6">
-        <!-- MIDI Channel Select Section -->
-        <section class="rounded-lg bg-slate-900 p-6">
-          <h2
-            class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
-          >
-            MIDI Channel Select
-          </h2>
-          <div class="grid grid-cols-2 gap-6">
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Transmit Channel
-              </label>
-              <select
-                x-on:change="handleParamChange('sendChannel', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.sendChannel"
-                  x-for="option in parameters.sendChannel.options"
+      <template x-if="parameters != null">
+        <div class="mb-12 grid grid-cols-2 gap-6">
+          <!-- MIDI Channel Select Section -->
+          <section class="rounded-lg bg-slate-900 p-6">
+            <h2
+              class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+            >
+              MIDI Channel Select
+            </h2>
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Transmit Channel
+                </label>
+                <select
+                  x-on:change="handleParamChange('sendChannel', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Sets the MIDI channel for outgoing messages. Choose between
-                channels 1-16.
-              </p>
-            </div>
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Receive Channel
-              </label>
-              <select
-                x-on:change="handleParamChange('receiveChannel', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.receiveChannel"
-                  x-for="option in parameters.receiveChannel.options"
+                  <template
+                    x-if="parameters.sendChannel?.options"
+                    x-for="option in parameters.sendChannel.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Sets the MIDI channel for outgoing messages. Choose between
+                  channels 1-16.
+                </p>
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Receive Channel
+                </label>
+                <select
+                  x-on:change="handleParamChange('receiveChannel', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Sets the MIDI channel the instrument will respond to. Options:
-                1-16, All (responds to any channel).
-              </p>
+                  <template
+                    x-if="parameters.receiveChannel?.options"
+                    x-for="option in parameters.receiveChannel.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Sets the MIDI channel the instrument will respond to. Options:
+                  1-16, All (responds to any channel).
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- Keyboard Parameters Section -->
-        <section class="rounded-lg bg-slate-900 p-6">
-          <h2
-            class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
-          >
-            Keyboard Parameters
-          </h2>
-          <div class="grid grid-cols-2 gap-6">
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Audio Gate Threshold
-              </label>
-              <select
-                x-on:change="handleParamChange('audioInThreshold', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.audioInThreshold"
-                  x-for="option in parameters.audioInThreshold.options"
+          <!-- Keyboard Parameters Section -->
+          <section class="rounded-lg bg-slate-900 p-6">
+            <h2
+              class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+            >
+              Keyboard Parameters
+            </h2>
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Audio Gate Threshold
+                </label>
+                <select
+                  x-on:change="handleParamChange('audioInThreshold', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Sets the audio level required to trigger the envelopes. Options:
-                High, Medium, Low.
-              </p>
-            </div>
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                LFO Key Retrigger
-              </label>
-              <select
-                x-on:change="handleParamChange('lfoRetrigMode', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.lfoRetrigMode"
-                  x-for="option in parameters.lfoRetrigMode.options"
+                  <template
+                    x-if="parameters.audioInThreshold?.options"
+                    x-for="option in parameters.audioInThreshold.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Sets the audio level required to trigger the envelopes.
+                  Options: High, Medium, Low.
+                </p>
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  LFO Key Retrigger
+                </label>
+                <select
+                  x-on:change="handleParamChange('lfoRetrigMode', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Determines if the LFO resets when a key is pressed. Options: On
-                (resets), Off (runs freely).
-              </p>
+                  <template
+                    x-if="parameters.lfoRetrigMode?.options"
+                    x-for="option in parameters.lfoRetrigMode.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Determines if the LFO resets when a key is pressed. Options:
+                  On (resets), Off (runs freely).
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="col-span-full rounded-lg bg-slate-900 p-6">
-          <h2
-            class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
-          >
-            Module Parameters
-          </h2>
-          <div class="grid grid-cols-4 gap-6">
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Note Priority
-              </label>
-              <select
-                x-on:change="handleParamChange('notePriority', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.notePriority"
-                  x-for="option in parameters.notePriority.options"
+          <section class="col-span-full rounded-lg bg-slate-900 p-6">
+            <h2
+              class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+            >
+              Module Parameters
+            </h2>
+            <div class="grid grid-cols-4 gap-6">
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Note Priority
+                </label>
+                <select
+                  x-on:change="handleParamChange('notePriority', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Sets note priority when more than one key is pressed. Options:
-                High, Low, Last.
-              </p>
-            </div>
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Velocity Response
-              </label>
-              <select
-                x-on:change="handleParamChange('velocityCurve', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.velocityCurve"
-                  x-for="option in parameters.velocityCurve.options"
+                  <template
+                    x-if="parameters.notePriority?.options"
+                    x-for="option in parameters.notePriority.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Sets note priority when more than one key is pressed. Options:
+                  High, Low, Last.
+                </p>
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Velocity Response
+                </label>
+                <select
+                  x-on:change="handleParamChange('velocityCurve', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Sets the velocity curve. Options: Lin (linear), Log
-                (logarithmic), Anti Log (exponential).
-              </p>
-            </div>
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Envelope Legato Mode
-              </label>
-              <select
-                x-on:change="handleParamChange('envLegatoMode', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.envLegatoMode"
-                  x-for="option in parameters.envLegatoMode.options"
+                  <template
+                    x-if="parameters.velocityCurve?.options"
+                    x-for="option in parameters.velocityCurve.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Sets the velocity curve. Options: Lin (linear), Log
+                  (logarithmic), Anti Log (exponential).
+                </p>
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Envelope Legato Mode
+                </label>
+                <select
+                  x-on:change="handleParamChange('envLegatoMode', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Enables legato mode. On: envelopes are not retriggered. Off:
-                envelopes are retriggered on each key press.
-              </p>
-            </div>
-            <div>
-              <label class="mb-2 block text-sm font-medium">
-                Aftertouch Response
-              </label>
-              <select
-                x-on:change="handleParamChange('aftertouchCurve', $event.target.value)"
-                class="input focusable"
-              >
-                <template
-                  x-if="parameters.aftertouchCurve"
-                  x-for="option in parameters.aftertouchCurve.options"
+                  <template
+                    x-if="parameters.envLegatoMode?.options"
+                    x-for="option in parameters.envLegatoMode.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Enables legato mode. On: envelopes are not retriggered. Off:
+                  envelopes are retriggered on each key press.
+                </p>
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-medium">
+                  Aftertouch Response
+                </label>
+                <select
+                  x-on:change="handleParamChange('aftertouchCurve', $event.target.value)"
+                  class="input focusable"
                 >
-                  <option :value="option.value" x-text="option.label"></option>
-                </template>
-              </select>
-              <p class="mt-2 text-balance text-xs text-slate-400">
-                Sets the aftertouch curve. Options: Exponential, Logarithmic,
-                Linear.
-              </p>
+                  <template
+                    x-if="parameters.aftertouchCurve?.options"
+                    x-for="option in parameters.aftertouchCurve.options"
+                  >
+                    <option
+                      x-bind:value="option.value"
+                      x-text="option.label"
+                    ></option>
+                  </template>
+                </select>
+                <p class="mt-2 text-balance text-xs text-slate-400">
+                  Sets the aftertouch curve. Options: Exponential, Logarithmic,
+                  Linear.
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
+      </template>
 
+      <div class="mb-12 grid grid-cols-2 gap-6">
         <template x-if="sequences.length">
           <section class="col-span-full">
             <h2
@@ -316,13 +342,23 @@
                     class="mb-2 text-lg font-medium"
                     x-text="`Sequence ${index + 1}`"
                   ></h3>
+
+                  <div class="mb-4 bg-black p-2">
+                    <template x-for="group in 4">
+                      <pre
+                        class="overflow-scroll whitespace-pre-wrap border-dashed border m-2 border-white/20 p-1 font-mono text-sm leading-none text-white"
+                        x-text="sequence.split(' ').slice((group - 1) * 16, group * 16).map((note) =>  note.padStart(2, ' ')).join(' ')"
+                      ></pre>
+                    </template>
+                  </div>
+
                   <div class="relative h-60 overflow-x-auto bg-slate-900">
                     <div
-                      class="absolute inset-y-0 left-0 flex w-12 flex-col border-r border-slate-700"
+                      class="absolute inset-y-0 left-0 flex w-10 flex-col border-r border-slate-800"
                     >
                       <template x-for="note in getNoteRange(sequence)">
                         <div
-                          class="flex flex-1 items-center justify-center border-b border-slate-700 bg-yellow-800 text-xs"
+                          class="flex w-full flex-1 items-center justify-center border-b border-slate-800 bg-slate-900 px-2 text-center font-mono text-[10px]"
                           x-text="note"
                         ></div>
                       </template>
@@ -332,10 +368,12 @@
                         x-for="(note, noteIndex) in sequence.split(' ')"
                         :key="`sequence-${index}-note-${noteIndex}`"
                       >
-                        <div class="relative h-full w-6 flex-none">
+                        <div
+                          class="relative h-full w-6 flex-shrink-0 flex-grow-0"
+                        >
                           <template x-if="note !== 'x'">
                             <div
-                              class="absolute left-0 right-0 flex items-center justify-center border border-slate-900 bg-blue-500"
+                              class="absolute left-0 right-0 flex w-6 items-center justify-center border border-slate-900 bg-blue-500"
                               :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
                             >
                               <span
@@ -344,8 +382,17 @@
                               ></span>
                             </div>
                           </template>
+
                           <template x-if="note === 'x'">
-                            <div class="absolute left-0 right-0 bg-black"></div>
+                            <div
+                              class="absolute left-0 right-0 flex items-center justify-center border border-slate-900 bg-blue-400 opacity-50"
+                              :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
+                            >
+                              <span
+                                class="text-center text-[8px] font-bold text-black"
+                                x-text="noteIndex + 1"
+                              ></span>
+                            </div>
                           </template>
                         </div>
                       </template>
@@ -370,7 +417,7 @@
             </p>
           </section>
         </template>
-      </main>
+      </div>
 
       <aside class="fixed inset-x-0 bottom-0">
         <div
@@ -405,12 +452,13 @@
             <div class="leading-4">
               <div
                 x-bind:class="{
-                'text-purple-400': log.type === 'debug',
-                'text-gray-200': log.type === 'info',
-                'text-red-400': log.type === 'error',
-                'text-yellow-400': log.type === 'warning',
-                'text-green-400': log.type === 'success',
-                'text-black bg-yellow-500 my-2 p-2 font-bold': log.type === 'alert',
+                  'text-purple-400': log.type === 'debug',
+                  'text-gray-200': log.type === 'info',
+                  'text-red-400': log.type === 'error',
+                  'text-yellow-400': log.type === 'warning',
+                  'text-green-400': log.type === 'success',
+                  'text-sky-400': log.type === 'comment',
+                  'text-black bg-yellow-500 my-2 leading-none p-1 font-bold': log.type === 'alert',
                 }"
               >
                 <kbd class="mr-1 opacity-50" x-text="log.timestamp"></kbd>
