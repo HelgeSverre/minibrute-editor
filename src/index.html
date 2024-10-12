@@ -343,16 +343,21 @@
             </h2>
             <div class="grid grid-cols-2 gap-4">
               <template
-                x-for="(sequence, seqIndex) in sequences"
-                :key="`sequence-${seqIndex}`"
+                x-for="sequence in getDetailedSequences()"
+                :key="`sequence-${sequence.index}`"
               >
                 <div class="rounded-lg bg-slate-800 p-4">
-                  <h3
-                    class="mb-2 text-lg font-medium"
-                    x-text="`Sequence ${seqIndex + 1}`"
-                  ></h3>
+                  <div class="flex flex-row items-center justify-between">
+                    <h3
+                      class="mb-2 text-lg font-medium"
+                      x-text="`Sequence ${sequence.index}`"
+                    ></h3>
 
-                  <div x-text="getNoteRange(sequence).length"></div>
+                    <div class="text-sm text-slate-500">
+                      <span x-text="sequence.notes.length"></span>
+                      Steps
+                    </div>
+                  </div>
 
                   <div
                     class="relative overflow-y-auto rounded-lg border border-slate-700 bg-slate-900"
@@ -361,9 +366,9 @@
                       <div
                         class="sticky left-0 z-10 w-9 flex-shrink-0 bg-slate-800"
                       >
-                        <template x-for="note in getNoteRange(sequence)">
+                        <template x-for="note in sequence.notes">
                           <div
-                            class="h-4 border-b border-slate-700 px-1 text-right font-mono text-[10px] text-slate-200"
+                            class="h-4 border-b border-slate-700 px-1 text-left font-mono text-[10px] text-slate-500"
                             :class="{
                               'bg-slate-900': note.isBlack,
                               'bg-slate-800/50': note.isWhite,
@@ -374,7 +379,7 @@
                         </template>
                       </div>
                       <div class="flex-grow">
-                        <template x-for="note in getNoteRange(sequence)">
+                        <template x-for="note in sequence.notes">
                           <div
                             class="flex h-4 border-b border-slate-950"
                             :class="{
@@ -384,7 +389,7 @@
                             }"
                           >
                             <template
-                              x-for="seqNote in getSequenceNotes(sequence)"
+                              x-for="seqNote in getSequenceNotes(sequence.raw)"
                             >
                               <div class="w-6 flex-shrink-0">
                                 <template x-if="seqNote.note === note.midi">
