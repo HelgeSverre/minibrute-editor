@@ -21,6 +21,16 @@
               Identify
             </button>
           </div>
+          <div>
+            <button x-on:click="playNote()" class="button focusable">
+              Play note
+            </button>
+          </div>
+          <div>
+            <button x-on:click="playNotes()" class="button focusable">
+              Play Sequence
+            </button>
+          </div>
 
           <div>
             <select
@@ -242,9 +252,7 @@
         </section>
 
         <section class="col-span-full">
-          <h2 class="mb-4 text-2xl font-semibold text-slate-300">
-            BETTER SEQUENCES
-          </h2>
+          <h2 class="mb-4 text-2xl font-semibold text-slate-300">Sequences</h2>
           <div class="grid grid-cols-2 gap-4">
             <template
               x-for="(sequence, index) in sequences"
@@ -274,9 +282,14 @@
                       <div class="relative h-full w-6 flex-none">
                         <template x-if="note !== 'x'">
                           <div
-                            class="absolute left-0 right-0 border border-slate-900 bg-blue-500"
+                            class="absolute left-0 right-0 flex items-center justify-center border border-slate-900 bg-blue-500"
                             :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
-                          ></div>
+                          >
+                            <span
+                              class="text-center text-[8px] font-bold text-black"
+                              x-text="noteIndex + 1"
+                            ></span>
+                          </div>
                         </template>
                         <template x-if="note === 'x'">
                           <div class="absolute left-0 right-0 bg-black"></div>

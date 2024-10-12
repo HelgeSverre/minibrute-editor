@@ -26,21 +26,6 @@ export default () => {
       // Transmit channel
       sendChannel: {
         cc: 103,
-        //     |  |        |    | val  |   val      |
-        sysex: "F0 00 20 6B 04 01 06 01 07 F7",
-        // F0 - SYSEX_HEADER
-        // 00_20_6B -  sysex id - arturaia
-        // 04_01 - Fixed
-        // 06 - increments every time wraps at 127 -> 1
-        // 07 -  param to changer (transmit channel)
-        //   - 07 - transmit channel 0x0(0) = 1, 0x10 (16)
-        //   - 05 - receive channel:  0x0(0) = chan 1, 0x 0x0F = chan 16 (val = 15)  , 0x10 (16) == all (16)
-        //   - 09 - audio gate threshold : 0x00 (0) = high, 0x01 (1) = medium, 0x02 (2) = low
-        //   - 13 - aftertouch response: 0x00 (0) = linear, 0x01 (1) = logarithmic, 0x02 (2) = exponential
-        //   - 11 - velocity response: 0x00 (0) = linear, 0x01 (1) = logarithmic, 0x02 (2) = exponential
-
-        // 01 -  param value
-        // F7 - SYSEX_END
         options: Array.from({ length: 16 }, (_, i) => ({
           label: `${i + 1}`,
           value: i + 1,
@@ -148,6 +133,35 @@ export default () => {
       this.logToWindow(`[DEBUG] ---------- Cleared log ----------`, "info");
     },
 
+    // TODO: For debugging only
+    playNotes() {
+      const gap = 250;
+      [60, 62, 64, 65, 67, 69, 71, 72].forEach((note, i) => {
+        setTimeout(() => this.playNote(note, gap), i * gap);
+      });
+    },
+
+    // TODO: For debugging only
+    playNote(note = 60, duration = 1000, velocity = 127) {
+      const output = this.midiOutputs.find(
+        (device) => device.id === this.selectedOutput,
+      );
+
+      this.logToWindow(
+        `Playing note ${note} for ${duration}ms at velocity ${velocity}`,
+        "debug",
+      );
+
+      // Note On
+      output.send([0x90, note, velocity]);
+
+      // Note Off after duration (1000ms by default)
+      setTimeout(() => {
+        this.logToWindow(`Note Off: ${note}`, "debug");
+        output.send([0x80, note, 0]);
+      }, duration);
+    },
+
     getMinNoteWithOctave(sequence) {
       const minNote = Math.min(
         ...sequence
@@ -213,7 +227,9 @@ export default () => {
       };
       this.logMessages.push(entry);
 
-      this.scrollToBottom();
+      this.$nextTick(() => {
+        this.scrollToBottom();
+      });
     },
 
     scrollToBottom() {
@@ -232,9 +248,6 @@ export default () => {
       } else {
         this.logToWindow("WebMIDI is not supported in this browser.", "error");
       }
-      // ["warning", "error", "success", "info", "debug"].forEach((type) => {
-      //   this.logToWindow("Dummy message here ", type);
-      // });
 
       // Initialize paramValues with default values
       for (const [name, param] of Object.entries(this.parameters)) {
