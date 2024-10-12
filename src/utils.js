@@ -76,3 +76,11 @@ export function getMIDIMessageType(statusByte) {
 export function isSysExMessage(status) {
   return status === 0xf0 || status === 0xf7;
 }
+
+export function isSysexIdentityReply(data) {
+  return (
+    data[0] === 0xf0 && data[1] === 0x7e && data[3] === 0x06 && data[4] === 0x02
+  );
+}
+
+export const SYSEX_IDENTITY_REQUEST = [0xf0, 0x7e, 0x7f, 0x06, 0x01, 0xf7];

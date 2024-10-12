@@ -5,13 +5,12 @@ import {
   bytesToVersion,
   extractHexSlice,
   formatMIDIMessage,
+  isSysexIdentityReply,
   isSysExMessage,
+  SYSEX_IDENTITY_REQUEST,
 } from "@/utils.js";
 
-const identityRequest = [0xf0, 0x7e, 0x7f, 0x06, 0x01, 0xf7];
-
-export default () => {
-  return {
+export default () => ({
     parameters: {
       receiveChannel: {
         cc: 102,
@@ -280,17 +279,9 @@ export default () => {
       }
 
       const isSysex = isSysExMessage(event.data[0]);
-      const logMessage = formatMIDIMessage(event);
+    this.logToWindow(formatMIDIMessage(event), isSysex ? "debug" : "info");
 
-      this.logToWindow(logMessage, isSysex ? "debug" : "info");
-
-      // Handle Identity Reply
-      if (
-        event.data[0] === 0xf0 &&
-        event.data[1] === 0x7e &&
-        event.data[3] === 0x06 &&
-        event.data[4] === 0x02
-      ) {
+    if (isSysexIdentityReply(event.data)) {
         this.handleIdentityReply(event.data);
       }
     },
