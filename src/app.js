@@ -1,6 +1,6 @@
 // Credits to Hackabrute for these Sysex strings - https://hackabrute.yusynth.net/MINIBRUTE/standard2SE_en.html
-// const SYSEX_CONVERT_VANILLA_TO_SE = "F0 00 20 6B 04 01 75 01 3E 01 F7";
-// const SYSEX_CONVERT_SE_TO_VANILLA = "F0 00 20 6B 04 01 46 01 3E 00 F7";
+const SYSEX_CONVERT_VANILLA_TO_SE = "F0 00 20 6B 04 01 75 01 3E 01 F7";
+const SYSEX_CONVERT_SE_TO_VANILLA = "F0 00 20 6B 04 01 46 01 3E 00 F7";
 
 import {
   bytesToHex,
@@ -138,7 +138,7 @@ export default () => ({
   ],
 
   deviceVersion: null,
-
+  targetVersion: null,
   paramValues: {},
   midiInputs: [],
   midiOutputs: [],
@@ -404,7 +404,6 @@ export default () => ({
     this.logToWindow(error, "error");
   },
 
-
   handleInputChange() {
     const selectedDevice = this.midiInputs.find(
       (device) => device.id === this.selectedInput,
@@ -596,7 +595,7 @@ export default () => ({
     this.logToWindow("Sending: " + bytesToHex(sysexMessage), "info");
 
     try {
-      output.send(sysexMessage);
+      // output.send(sysexMessage);
     } catch (error) {
       this.logToWindow(`Error sending MIDI message: ${error.message}`, "error");
     }
@@ -637,5 +636,17 @@ export default () => ({
     } catch (error) {
       this.logToWindow(`Error sending MIDI message: ${error.message}`, "error");
     }
+  },
+
+  changeDeviceVersion() {
+    if (this.targetVersion === "se") {
+      this.sysexData = SYSEX_CONVERT_VANILLA_TO_SE;
+    } else if (this.targetVersion === "vanilla") {
+      this.sysexData = SYSEX_CONVERT_SE_TO_VANILLA;
+    } else {
+      this.logToWindow(`Invalid version: ${this.targetVersion}`, "error");
+    }
+
+    this.sendSysex();
   },
 });

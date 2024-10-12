@@ -64,13 +64,15 @@
           <div class="button-group">
             <select
               class="input focusable w-40 !bg-slate-900"
-              x-on:change="changeDeviceVersion($event.target.value)"
+              x-model="targetVersion"
             >
-              <option selected value="" disabled>Change to</option>
+              <option selected value="">Change to</option>
               <option value="se">MiniBrute SE (Step Sequencer)</option>
               <option value="vanilla">MiniBrute Original (Arpeggiator)</option>
             </select>
-            <button class="button focusable">Convert</button>
+            <button x-on:click="changeDeviceVersion" class="button focusable">
+              Convert
+            </button>
           </div>
 
           <div class="button-group">

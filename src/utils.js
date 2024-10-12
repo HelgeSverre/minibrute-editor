@@ -105,6 +105,5 @@ export function midiToNoteName(note) {
 
 export const SYSEX_IDENTITY_REQUEST = [0xf0, 0x7e, 0x7f, 0x06, 0x01, 0xf7];
 
-
 // F0 00 20 6B 04 00 01 03 01 00 00 00 F7
 // F0 7E 06 02 00 20 6B 04 00 01 03 01 00 00 00 F7
