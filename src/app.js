@@ -421,5 +421,4 @@ export default () => ({
       this.sendMIDIMessage(cc, midiValue);
       this.paramValues[param] = value;
     },
-  };
-};
+});
