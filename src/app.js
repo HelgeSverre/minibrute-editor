@@ -107,15 +107,17 @@ export default () => {
       },
     },
     sequences: [
-      "60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60",
-      "60 60 60 48 60 60 60 72 60 60 60 48 60 60 72 48",
-      "48 60 48 60 48 60 63 51 48 60 48 60 63 51 67 55 48 60 48 60 48 60 63 51 48 60 48 60 63 51 67 61",
-      "60 60 60 60 60 60 57 59 60 60 60 59 60 60 60 60 60 60 62 59 60 62 64 67 69",
-      "48 60 72 70 48 67 60 55 48 x 65 72 48 62 72 62 51 58 63 72 51 70 63 58 51 x 62 72 51 72 62 64",
-      "48 x x 60 48 x 60 x 60 x x 72 60 x 60 x 48 x x 60 48 x 60 x 65 x x",
-      "60 72 48 60 60 x x 48 60 72 x 60 60 x x 73 48 72 60 61 60 x 72 84 72 48 79 82 48 77 81 70",
-      "48 48 x x 72 60 48 48 x x 48 x 72 x 82 x 48 48 x x 72 60 48 48 x x 48 x 72 x 75 x 48 48 x x 72 49 48",
+      // "60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60",
+      // "60 60 60 48 60 60 60 72 60 60 60 48 60 60 72 48",
+      // "48 60 48 60 48 60 63 51 48 60 48 60 63 51 67 55 48 60 48 60 48 60 63 51 48 60 48 60 63 51 67 61",
+      // "60 60 60 60 60 60 57 59 60 60 60 59 60 60 60 60 60 60 62 59 60 62 64 67 69",
+      // "48 60 72 70 48 67 60 55 48 x 65 72 48 62 72 62 51 58 63 72 51 70 63 58 51 x 62 72 51 72 62 64",
+      // "48 x x 60 48 x 60 x 60 x x 72 60 x 60 x 48 x x 60 48 x 60 x 65 x x",
+      // "60 72 48 60 60 x x 48 60 72 x 60 60 x x 73 48 72 60 61 60 x 72 84 72 48 79 82 48 77 81 70",
+      // "48 48 x x 72 60 48 48 x x 48 x 72 x 82 x 48 48 x x 72 60 48 48 x x 48 x 72 x 75 x 48 48 x x 72 49 48",
     ],
+
+    deviceVersion: null,
 
     paramValues: {},
     midiInputs: [],
@@ -124,7 +126,7 @@ export default () => {
     selectedOutput: "",
     midiAccess: null,
 
-    consoleOpen: true,
+    consoleOpen: false,
     logMessages: [],
 
     clearLog() {
@@ -325,11 +327,17 @@ export default () => {
       const model = extractHexSlice(data, 10, 12);
       const version = bytesToVersion(data, 12, 4);
 
+      this.deviceVersion = version;
+
       const message = `Identity Reply - Manufacturer: ${manufacturer} (${manufacturerName}), Family: ${family}, Model: ${model}, Version: ${version}`;
       this.logToWindow(message, "success");
     },
 
     identify() {
+      if (this.consoleOpen === false) {
+        this.consoleOpen = true;
+      }
+
       const output = this.midiOutputs.find(
         (device) => device.id === this.selectedOutput,
       );
@@ -386,13 +394,20 @@ export default () => {
     },
 
     sendMIDIMessage(cc, value) {
-      const output = this.midiOutputs.find(
-        (device) => device.id === this.selectedOutput,
-      );
-      if (output) {
-        output.send([0xb0, cc, value]); // Channel 1 CC message
-      } else {
-        this.logToWindow("No MIDI output selected", "warning");
+      try {
+        const output = this.midiOutputs.find(
+          (device) => device.id === this.selectedOutput,
+        );
+        if (output) {
+          output.send([0xb0, cc, value]); // Channel 1 CC message
+        } else {
+          this.logToWindow("No MIDI output selected", "warning");
+        }
+      } catch (error) {
+        this.logToWindow(
+          `Error sending MIDI message: ${error.message}`,
+          "error",
+        );
       }
     },
 

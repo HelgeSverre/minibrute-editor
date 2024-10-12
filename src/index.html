@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MiniBrute Editor</title>
     <script type="module" src="./main.js" defer></script>
+    <link rel="preconnect" href="https://fonts.bunny.net" />
+    <link
+      href="https://fonts.bunny.net/css?family=inter:100,200,300,400,500,600,700,800|jetbrains-mono:100,200,300,400,500,600,700,800"
+      rel="stylesheet"
+    />
     <style>
       [x-cloak] {
         display: none;
@@ -12,45 +17,43 @@
     </style>
   </head>
   <body class="bg-slate-950 px-12 py-6 text-slate-200 antialiased">
-    <div x-data="app" x-cloak>
+    <div
+      x-cloak
+      x-data="app"
+      x-on:keydown.window.shift.l="consoleOpen = !consoleOpen"
+    >
       <header class="mb-6 flex flex-row items-center justify-between">
         <h1 class="text-xl font-bold text-blue-400">MiniBrute Editor</h1>
         <div class="flex flex-row justify-end gap-6">
-          <div>
+          <div class="button-group">
             <button x-on:click="identify" class="button focusable">
               Identify
             </button>
-          </div>
-          <div>
             <button x-on:click="playNote()" class="button focusable">
               Play note
             </button>
-          </div>
-          <div>
             <button x-on:click="playNotes()" class="button focusable">
               Play Sequence
             </button>
           </div>
 
-          <div>
+          <div class="flex flex-row gap-1">
             <select
               id="midiInput"
               x-model="selectedInput"
               x-on:change="handleInputChange"
-              class="input focusable !bg-slate-900"
+              class="input focusable w-40 !bg-slate-900"
             >
               <option value="">Select Input</option>
               <template x-for="input in midiInputs" :key="`input-${input.id}`">
                 <option :value="input.id" x-text="input.name"></option>
               </template>
             </select>
-          </div>
-          <div>
             <select
               id="midiOutput"
               x-model="selectedOutput"
               x-on:change="handleOutputChange"
-              class="input focusable !bg-slate-900"
+              class="input focusable w-40 !bg-slate-900"
             >
               <option value="">Select Output</option>
               <template
@@ -67,7 +70,9 @@
       <main class="mb-12 grid grid-cols-2 gap-6">
         <!-- MIDI Channel Select Section -->
         <section class="rounded-lg bg-slate-900 p-6">
-          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+          <h2
+            class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+          >
             MIDI Channel Select
           </h2>
           <div class="grid grid-cols-2 gap-6">
@@ -116,7 +121,9 @@
 
         <!-- Keyboard Parameters Section -->
         <section class="rounded-lg bg-slate-900 p-6">
-          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+          <h2
+            class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+          >
             Keyboard Parameters
           </h2>
           <div class="grid grid-cols-2 gap-6">
@@ -163,11 +170,13 @@
           </div>
         </section>
 
-        <section class="rounded-lg bg-slate-900 p-6">
-          <h2 class="mb-4 text-xl font-semibold text-slate-300">
+        <section class="col-span-full rounded-lg bg-slate-900 p-6">
+          <h2
+            class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+          >
             Module Parameters
           </h2>
-          <div class="grid grid-cols-2 gap-6">
+          <div class="grid grid-cols-4 gap-6">
             <div>
               <label class="mb-2 block text-sm font-medium">
                 Note Priority
@@ -251,68 +260,96 @@
           </div>
         </section>
 
-        <section class="col-span-full">
-          <h2 class="mb-4 text-2xl font-semibold text-slate-300">Sequences</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <template
-              x-for="(sequence, index) in sequences"
-              :key="`sequence-${index}`"
+        <template x-if="sequences.length">
+          <section class="col-span-full">
+            <h2
+              class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
             >
-              <div class="rounded-lg bg-slate-800 p-4">
-                <h3
-                  class="mb-2 text-lg font-medium"
-                  x-text="`Sequence ${index + 1}`"
-                ></h3>
-                <div class="relative h-60 overflow-x-auto bg-slate-900">
-                  <div
-                    class="absolute inset-y-0 left-0 flex w-12 flex-col border-r border-slate-700"
-                  >
-                    <template x-for="note in getNoteRange(sequence)">
-                      <div
-                        class="flex flex-1 items-center justify-center border-b border-slate-700 bg-yellow-800 text-xs"
-                        x-text="note"
-                      ></div>
-                    </template>
-                  </div>
-                  <div class="ml-12 flex h-full">
-                    <template
-                      x-for="(note, noteIndex) in sequence.split(' ')"
-                      :key="`sequence-${index}-note-${noteIndex}`"
+              Sequences
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+              <template
+                x-for="(sequence, index) in sequences"
+                :key="`sequence-${index}`"
+              >
+                <div class="rounded-lg bg-slate-800 p-4">
+                  <h3
+                    class="mb-2 text-lg font-medium"
+                    x-text="`Sequence ${index + 1}`"
+                  ></h3>
+                  <div class="relative h-60 overflow-x-auto bg-slate-900">
+                    <div
+                      class="absolute inset-y-0 left-0 flex w-12 flex-col border-r border-slate-700"
                     >
-                      <div class="relative h-full w-6 flex-none">
-                        <template x-if="note !== 'x'">
-                          <div
-                            class="absolute left-0 right-0 flex items-center justify-center border border-slate-900 bg-blue-500"
-                            :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
-                          >
-                            <span
-                              class="text-center text-[8px] font-bold text-black"
-                              x-text="noteIndex + 1"
-                            ></span>
-                          </div>
-                        </template>
-                        <template x-if="note === 'x'">
-                          <div class="absolute left-0 right-0 bg-black"></div>
-                        </template>
-                      </div>
-                    </template>
+                      <template x-for="note in getNoteRange(sequence)">
+                        <div
+                          class="flex flex-1 items-center justify-center border-b border-slate-700 bg-yellow-800 text-xs"
+                          x-text="note"
+                        ></div>
+                      </template>
+                    </div>
+                    <div class="ml-12 flex h-full">
+                      <template
+                        x-for="(note, noteIndex) in sequence.split(' ')"
+                        :key="`sequence-${index}-note-${noteIndex}`"
+                      >
+                        <div class="relative h-full w-6 flex-none">
+                          <template x-if="note !== 'x'">
+                            <div
+                              class="absolute left-0 right-0 flex items-center justify-center border border-slate-900 bg-blue-500"
+                              :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
+                            >
+                              <span
+                                class="text-center text-[8px] font-bold text-black"
+                                x-text="noteIndex + 1"
+                              ></span>
+                            </div>
+                          </template>
+                          <template x-if="note === 'x'">
+                            <div class="absolute left-0 right-0 bg-black"></div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </template>
-          </div>
-        </section>
+              </template>
+            </div>
+          </section>
+        </template>
+        <template x-if="!sequences.length">
+          <section class="rounded-lg bg-slate-900 p-6">
+            <h2
+              class="mb-4 text-xs font-light uppercase tracking-wide text-slate-400"
+            >
+              Sequences
+            </h2>
+
+            <p class="text-sm text-slate-500">
+              No sequences available, load the sequnces from the MiniBrute first
+              by clicking the "Load Sequences" button.
+            </p>
+          </section>
+        </template>
       </main>
 
       <aside class="fixed inset-x-0 bottom-0">
         <div
-          class="flex items-center justify-between border-y border-slate-800 bg-slate-900 px-3 py-1"
+          class="flex items-center justify-between gap-3 border-y border-slate-800 bg-slate-900 px-3 py-1"
         >
-          <span class="font-mono text-xs leading-none">MIDI Event Log</span>
+          <span class="mr-auto font-mono text-xs leading-none">
+            MIDI Event Log
+          </span>
 
           <button
+            x-on:click="clearLog"
+            class="focusable inline-block rounded p-2 text-xs leading-none text-white"
+          >
+            <span>Clear</span>
+          </button>
+          <button
             x-on:click="consoleOpen = !consoleOpen"
-            class="focusable block p-1 text-xs text-white"
+            class="focusable inline-block rounded p-2 text-xs leading-none text-white"
           >
             <span x-text="consoleOpen ? 'Hide' : 'Show'"></span>
           </button>

@@ -4,14 +4,34 @@
 
 @layer components {
   .focusable {
-    @apply focus-visible:border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700;
+    @apply focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500;
   }
 
   .input {
-    @apply block w-full rounded-md bg-slate-700 py-2 pl-3 pr-10 text-white;
+    @apply block w-full cursor-pointer rounded-md bg-slate-700 px-3 py-2 text-slate-200;
   }
 
   .button {
-    @apply block w-auto rounded-md bg-slate-900 px-3 py-2 text-center text-slate-200;
+    @apply focusable block w-auto cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-center text-slate-200 transition-colors duration-150 ease-in-out hover:bg-slate-800 active:bg-slate-700;
+  }
+
+  .button-group {
+    @apply flex flex-row items-center;
+  }
+
+  .button-group > button:not(:first-child):not(:last-child) {
+    @apply rounded-none border-x border-slate-800;
+  }
+
+  .button-group > button:focus-visible {
+    @apply z-10 !rounded-md bg-slate-800;
+  }
+
+  .button-group > button:first-child {
+    @apply rounded-r-none;
+  }
+
+  .button-group > button:last-child {
+    @apply rounded-l-none;
   }
 }
