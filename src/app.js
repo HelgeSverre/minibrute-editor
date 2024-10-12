@@ -1,6 +1,15 @@
 // const SYSEX_CONVERT_VANILLA_TO_SE = "F0 00 20 6B 04 01 75 01 3E 01 F7";
 // const SYSEX_CONVERT_SE_TO_VANILLA = "F0 00 20 6B 04 01 46 01 3E 00 F7";
 
+import {
+  bytesToVersion,
+  extractHexSlice,
+  formatMIDIMessage,
+  isSysExMessage,
+} from "@/utils.js";
+
+const identityRequest = [0xf0, 0x7e, 0x7f, 0x06, 0x01, 0xf7];
+
 export default () => {
   return {
     parameters: {
@@ -14,8 +23,24 @@ export default () => {
           { label: "All", value: 17 },
         ],
       },
+      // Transmit channel
       sendChannel: {
         cc: 103,
+        //     |  |        |    | val  |   val      |
+        sysex: "F0 00 20 6B 04 01 06 01 07 F7",
+        // F0 - SYSEX_HEADER
+        // 00_20_6B -  sysex id - arturaia
+        // 04_01 - Fixed
+        // 06 - increments every time wraps at 127 -> 1
+        // 07 -  param to changer (transmit channel)
+        //   - 07 - transmit channel 0x0(0) = 1, 0x10 (16)
+        //   - 05 - receive channel:  0x0(0) = chan 1, 0x 0x0F = chan 16 (val = 15)  , 0x10 (16) == all (16)
+        //   - 09 - audio gate threshold : 0x00 (0) = high, 0x01 (1) = medium, 0x02 (2) = low
+        //   - 13 - aftertouch response: 0x00 (0) = linear, 0x01 (1) = logarithmic, 0x02 (2) = exponential
+        //   - 11 - velocity response: 0x00 (0) = linear, 0x01 (1) = logarithmic, 0x02 (2) = exponential
+
+        // 01 -  param value
+        // F7 - SYSEX_END
         options: Array.from({ length: 16 }, (_, i) => ({
           label: `${i + 1}`,
           value: i + 1,
@@ -116,11 +141,13 @@ export default () => {
 
     consoleOpen: true,
     logMessages: [],
+
     clearLog() {
       this.logMessages = [];
 
       this.logToWindow(`[DEBUG] ---------- Cleared log ----------`, "info");
     },
+
     getMinNoteWithOctave(sequence) {
       const minNote = Math.min(
         ...sequence
@@ -205,6 +232,9 @@ export default () => {
       } else {
         this.logToWindow("WebMIDI is not supported in this browser.", "error");
       }
+      // ["warning", "error", "success", "info", "debug"].forEach((type) => {
+      //   this.logToWindow("Dummy message here ", type);
+      // });
 
       // Initialize paramValues with default values
       for (const [name, param] of Object.entries(this.parameters)) {
@@ -219,9 +249,83 @@ export default () => {
       this.updateDeviceLists();
 
       midiAccess.onstatechange = (event) => {
-        this.logToWindow("MIDI state change: " + event.port.name, "info");
         this.updateDeviceLists();
       };
+
+      // Set up MIDI input listeners
+      for (let input of midiAccess.inputs.values()) {
+        input.onmidimessage = this.onMIDIMessage.bind(this);
+      }
+    },
+
+    onMIDIMessage(event) {
+      // "Active Sensing" - ignore, sent every 300ms
+      if (event.data[0] === 0xfe) {
+        return;
+      }
+
+      const isSysex = isSysExMessage(event.data[0]);
+      const logMessage = formatMIDIMessage(event);
+
+      this.logToWindow(logMessage, isSysex ? "debug" : "info");
+
+      // Handle Identity Reply
+      if (
+        event.data[0] === 0xf0 &&
+        event.data[1] === 0x7e &&
+        event.data[3] === 0x06 &&
+        event.data[4] === 0x02
+      ) {
+        this.handleIdentityReply(event.data);
+      }
+    },
+
+    getMIDIMessageType(statusByte) {
+      const types = [
+        "Note Off",
+        "Note On",
+        "Polyphonic Aftertouch",
+        "Control Change",
+        "Program Change",
+        "Channel Aftertouch",
+        "Pitch Bend",
+        "System",
+      ];
+      return types[statusByte - 8] || "Unknown";
+    },
+
+    handleIdentityReply(data) {
+      // Ex: F0 7E 01 06 02 00 20 6B 04 00 01 01 01 00 03 02 F7
+      // Arturia: 00 20 6B
+      // Version: 1.1.0.3.2
+
+      // todo: fetch this from a json file on github
+      // ex: https://github.com/jeffkamo/midi-manufacturers/blob/main/manufacturers.json
+      const manufacturers = {
+        "00 20 6B": "Arturia",
+        "00 20 33": "Access",
+      };
+
+      const manufacturer = extractHexSlice(data, 5, 8);
+      const manufacturerName = manufacturers[manufacturer] || "Unknown";
+      const family = extractHexSlice(data, 8, 10);
+      const model = extractHexSlice(data, 10, 12);
+      const version = bytesToVersion(data, 12, 4);
+
+      const message = `Identity Reply - Manufacturer: ${manufacturer} (${manufacturerName}), Family: ${family}, Model: ${model}, Version: ${version}`;
+      this.logToWindow(message, "success");
+    },
+
+    identify() {
+      const output = this.midiOutputs.find(
+        (device) => device.id === this.selectedOutput,
+      );
+      if (output) {
+        output.send(identityRequest);
+        this.logToWindow("Sent Identity Request", "info");
+      } else {
+        this.logToWindow("No MIDI output selected", "warning");
+      }
     },
 
     updateDeviceLists() {
@@ -236,11 +340,11 @@ export default () => {
         device.name.toLowerCase().includes("minibrute"),
       );
 
-      if (miniBruteInput) {
+      if (miniBruteInput && this.selectedInput !== miniBruteInput.id) {
         this.selectedInput = miniBruteInput.id;
         this.handleInputChange();
       }
-      if (miniBruteOutput) {
+      if (miniBruteOutput && this.selectedOutput !== miniBruteOutput.id) {
         this.selectedOutput = miniBruteOutput.id;
         this.handleOutputChange();
       }
