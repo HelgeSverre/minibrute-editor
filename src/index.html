@@ -316,9 +316,8 @@
             <div class="leading-4">
               <div
                 x-bind:class="{
-                'hidden': log.type === 'debug' && debug === false,
-                'text-purple-300': log.type === 'debug' && debug === true,
-                'text-zinc-400': log.type === 'info',
+                'text-purple-400': log.type === 'debug',
+                'text-gray-200': log.type === 'info',
                 'text-red-400': log.type === 'error',
                 'text-yellow-400': log.type === 'warning',
                 'text-green-400': log.type === 'success',
@@ -326,7 +325,6 @@
                 }"
               >
                 <kbd class="mr-1 opacity-50" x-text="log.timestamp"></kbd>
-                <span x-show="log.type === 'debug'">🚧</span>
                 <span x-text="log.message"></span>
               </div>
             </div>
