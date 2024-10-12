@@ -343,68 +343,67 @@
             </h2>
             <div class="grid grid-cols-2 gap-4">
               <template
-                x-for="(sequence, index) in sequences"
-                :key="`sequence-${index}`"
+                x-for="(sequence, seqIndex) in sequences"
+                :key="`sequence-${seqIndex}`"
               >
                 <div class="rounded-lg bg-slate-800 p-4">
                   <h3
                     class="mb-2 text-lg font-medium"
-                    x-text="`Sequence ${index + 1}`"
+                    x-text="`Sequence ${seqIndex + 1}`"
                   ></h3>
 
                   <div class="mb-4 bg-black p-2">
                     <template x-for="group in 4">
-                      <pre
-                        class="my-2 overflow-scroll whitespace-pre-wrap border border-dashed border-white/20 p-1 font-mono text-sm leading-none text-white"
-                        x-text="sequence.split(' ').slice((group - 1) * 16, group * 16).map((note) =>  note.padStart(2, ' ')).join(' ')"
-                      ></pre>
+                      <div class="flex items-center justify-start gap-2">
+                        <span
+                          class="w-5 text-right font-mono font-bold text-blue-400"
+                          x-text="`${group}`"
+                        ></span>
+                        <pre
+                          class="my-2 overflow-scroll whitespace-pre-wrap border border-dashed border-white/20 p-1 font-mono text-sm leading-none text-white"
+                          x-text="sequence.split(' ').slice((group - 1) * 16, group * 16).map((note) => note.padStart(3, ' ')).join(' ')"
+                        ></pre>
+                      </div>
                     </template>
                   </div>
 
-                  <div class="relative h-60 overflow-x-auto bg-slate-900">
-                    <div
-                      class="absolute inset-y-0 left-0 flex w-10 flex-col border-r border-slate-800"
-                    >
-                      <template x-for="note in getNoteRange(sequence)">
-                        <div
-                          class="flex h-8 w-full flex-1 items-center justify-center border-b border-slate-800 bg-slate-900 px-2 text-center font-mono text-[10px]"
-                          x-text="note"
-                        ></div>
-                      </template>
-                    </div>
-                    <div class="ml-12 flex h-full">
-                      <template
-                        x-for="(note, noteIndex) in sequence.split(' ')"
-                        :key="`sequence-${index}-note-${noteIndex}`"
+                  <div class="relative h-80 overflow-y-auto bg-slate-900">
+                    <div class="flex">
+                      <div
+                        class="sticky left-0 z-10 w-12 flex-shrink-0 bg-slate-800"
                       >
-                        <div
-                          class="relative h-full w-6 flex-shrink-0 flex-grow-0"
+                        <template
+                          x-for="note in getNoteRange(sequence)"
+                          :key="note.midi"
                         >
-                          <template x-if="note !== 'x'">
-                            <div
-                              class="absolute left-0 right-0 flex w-6 items-center justify-center border border-slate-900 bg-blue-500"
-                              :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
+                          <div
+                            class="h-4 border-b border-slate-700 px-1 text-right font-mono text-[10px] text-slate-200"
+                            x-text="note.label"
+                          ></div>
+                        </template>
+                      </div>
+                      <div class="flex-grow">
+                        <template x-for="note in getNoteRange(sequence)">
+                          <div class="flex h-4 border-b border-slate-950">
+                            <template
+                              x-for="seqNote in getSequenceNotes(sequence)"
                             >
-                              <span
-                                class="text-center text-[8px] font-bold text-black"
-                                x-text="noteIndex + 1"
-                              ></span>
-                            </div>
-                          </template>
-
-                          <template x-if="note === 'x'">
-                            <div
-                              class="absolute left-0 right-0 flex items-center justify-center border border-slate-900 bg-blue-400 opacity-50"
-                              :style="`height: ${100 / 16}%; bottom: ${calculateNotePosition(note, sequence)}%;`"
-                            >
-                              <span
-                                class="text-center text-[8px] font-bold text-black"
-                                x-text="noteIndex + 1"
-                              ></span>
-                            </div>
-                          </template>
-                        </div>
-                      </template>
+                              <div class="flex-0 w-6">
+                                <template x-if="seqNote.note === note.midi">
+                                  <div
+                                    class="flex h-full items-center justify-center bg-blue-400 outline outline-1 outline-slate-900"
+                                  >
+                                    <span
+                                      class="block text-center text-[10px] font-bold text-black"
+                                      x-text="seqNote.step"
+                                    ></span>
+                                  </div>
+                                </template>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -428,7 +427,7 @@
         </template>
       </div>
 
-      <aside class="fixed inset-x-0 bottom-0">
+      <aside class="fixed inset-x-0 bottom-0 z-50">
         <div
           class="flex items-center justify-between gap-3 border-y border-slate-800 bg-slate-900 px-3 py-1"
         >

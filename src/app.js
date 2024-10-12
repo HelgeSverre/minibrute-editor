@@ -8,6 +8,7 @@ import {
   formatMIDIMessage,
   isSysexIdentityReply,
   isSysExMessage,
+  midiToNoteName,
   SYSEX_IDENTITY_REQUEST,
 } from "@/utils.js";
 
@@ -164,30 +165,13 @@ export default () => ({
     }, duration);
   },
 
-  getMinNoteWithOctave(sequence) {
-    const minNote = Math.min(
-      ...sequence
-        .split(" ")
-        .filter((n) => n !== "x")
-        .map(Number),
-    );
-    return Math.floor(minNote / 12) * 12;
-  },
-
-  getMaxNoteWithOctave(sequence) {
-    const maxNote = Math.max(
-      ...sequence
-        .split(" ")
-        .filter((n) => n !== "x")
-        .map(Number),
-    );
-    const minNoteWithOctave = this.getMinNoteWithOctave(sequence);
-    return Math.max(minNoteWithOctave + 12, maxNote);
-  },
-
   getNoteRange(sequence) {
-    const minNote = this.getMinNoteWithOctave(sequence);
-    const maxNote = this.getMaxNoteWithOctave(sequence);
+    const notes = sequence
+      .split(" ")
+      .filter((n) => n !== "x")
+      .map(Number);
+    const minNote = Math.min(...notes);
+    const maxNote = Math.max(...notes);
     const noteNames = [
       "C",
       "C#",
@@ -203,22 +187,21 @@ export default () => ({
       "B",
     ];
 
-    let notes = [];
+    let range = [];
     for (let i = maxNote; i >= minNote; i--) {
       const octave = Math.floor(i / 12) - 1;
       const noteName = noteNames[i % 12];
-      notes.push(`${noteName}${octave}`);
+      range.push({ midi: i, label: `${noteName}${octave}` });
     }
-
-    return notes;
+    return range;
   },
 
-  calculateNotePosition(note, sequence) {
-    if (note === "x") return 0;
-    const minNote = this.getMinNoteWithOctave(sequence);
-    const maxNote = this.getMaxNoteWithOctave(sequence);
-    const totalRange = maxNote - minNote;
-    return ((Number(note) - minNote) / totalRange) * 100;
+  getSequenceNotes(sequence) {
+    return sequence.split(" ").map((note, index) => ({
+      step: index + 1,
+      note: note === "x" ? null : Number(note),
+      label: midiToNoteName(note),
+    }));
   },
 
   logToWindow(message, type = "info") {
@@ -266,9 +249,7 @@ export default () => ({
     this.midiAccess = midiAccess;
     this.updateDeviceLists();
 
-    midiAccess.onstatechange = (event) => {
-      this.updateDeviceLists();
-    };
+    midiAccess.onstatechange = () => this.updateDeviceLists();
 
     // Set up MIDI input listeners
     for (let input of midiAccess.inputs.values()) {
@@ -460,7 +441,7 @@ export default () => ({
         if (data[7] === 0x23) {
           // Extract sequence data from the message
           const sequence = Array.from(data.slice(12, 44))
-            .map((note) => (note === 0 ? "x" : note.toString()))
+            .map((note) => (note === 0 || note === 127 ? "x" : note.toString()))
             .join(" ");
 
           // Add the received sequence part to the full sequence

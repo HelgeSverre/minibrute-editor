@@ -83,4 +83,24 @@ export function isSysexIdentityReply(data) {
   );
 }
 
+export function midiToNoteName(note) {
+  const notes = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ];
+  const noteName = notes[note % 12];
+  const octave = Math.floor(note / 12) - 1;
+  return `${noteName}${octave}`;
+}
+
 export const SYSEX_IDENTITY_REQUEST = [0xf0, 0x7e, 0x7f, 0x06, 0x01, 0xf7];
