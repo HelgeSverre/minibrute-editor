@@ -16,15 +16,31 @@
       }
     </style>
   </head>
-  <body class="bg-slate-950 px-12 py-6 text-slate-200 antialiased">
+  <body class="bg-slate-950 px-12 text-slate-200 antialiased">
     <div
       x-cloak
       x-data="app"
       x-on:keydown.window.shift.l="consoleOpen = !consoleOpen"
+      class="flex flex-col p-3"
     >
       <header class="mb-6 flex flex-row items-center justify-between">
         <h1 class="text-xl font-bold text-blue-400">MiniBrute Editor</h1>
-        <div class="flex flex-row justify-end gap-6">
+
+        <nav class="flex flex-row items-center justify-between gap-6">
+          <template x-if="deviceVersion">
+            <div class="flex flex-col items-end justify-center gap-1">
+              <span
+                class="inline-block text-xs font-light leading-none text-slate-500"
+              >
+                Version
+              </span>
+              <span
+                class="inline-block text-xs font-medium leading-none"
+                x-text="deviceVersion"
+              ></span>
+            </div>
+          </template>
+
           <div class="button-group">
             <button x-on:click="identify" class="button focusable">
               Identify
@@ -34,6 +50,9 @@
             </button>
             <button x-on:click="playNotes()" class="button focusable">
               Play Sequence
+            </button>
+            <button x-on:click="loadSequences" class="button focusable">
+              Load Sequences
             </button>
           </div>
 
@@ -64,7 +83,7 @@
               </template>
             </select>
           </div>
-        </div>
+        </nav>
       </header>
 
       <main class="mb-12 grid grid-cols-2 gap-6">

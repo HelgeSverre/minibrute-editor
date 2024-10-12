@@ -384,6 +384,10 @@ export default () => {
       }
     },
 
+    loadSequences() {
+
+    },
+
     handleOutputChange() {
       const selectedDevice = this.midiOutputs.find(
         (device) => device.id === this.selectedOutput,
