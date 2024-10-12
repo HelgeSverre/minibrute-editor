@@ -2,10 +2,8 @@
 
 <a href="https://minibrute-editor.vercel.app"><img src="https://img.shields.io/badge/Try%20it-Live-%23FADE6A.svg?style=for-the-badge"></a>
 
-A web based editor for the Arturia MiniBrute synthesizer (original and SE), it allows you to edit the MiniBrute's
-configuration and sequences.
-
-Built with Alpine.js, Tailwind CSS and Vite.
+A web-based editor for the Arturia MiniBrute synthesizer (original and SE). It allows you to edit the MiniBrute's
+configuration and sequences. Built with Alpine.js, Tailwind CSS, and Vite.
 
 ## 🚀 Getting Started
 
@@ -65,7 +63,7 @@ Example sysex message
 ```
 # F0 - SYSEX_HEADER
 # 00 20 6B -  SYSEX Manufacturer (Arturia)
-# TODO... 
+# TODO...
 # F7 - SYSEX_END
 ```
 
