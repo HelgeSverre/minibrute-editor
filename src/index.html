@@ -62,7 +62,10 @@
           </template>
 
           <div class="button-group">
-            <select class="input focusable w-40 !bg-slate-900">
+            <select
+              class="input focusable w-40 !bg-slate-900"
+              x-on:change="changeDeviceVersion($event.target.value)"
+            >
               <option selected value="" disabled>Change to</option>
               <option value="se">MiniBrute SE (Step Sequencer)</option>
               <option value="vanilla">MiniBrute Original (Arpeggiator)</option>
@@ -84,6 +87,15 @@
           </div>
 
           <div class="flex flex-row gap-1">
+            <select
+              x-model="selectedChannel"
+              class="input focusable w-auto !bg-slate-900"
+            >
+              <option value="">Channel</option>
+              <template x-for="channel in 17">
+                <option x-bind:value="channel -1" x-text="channel -1"></option>
+              </template>
+            </select>
             <select
               id="midiInput"
               x-model="selectedInput"
@@ -113,7 +125,22 @@
         </nav>
       </header>
 
-      <template x-if="false &&  parameters != null">
+      <div class="mb-8 flex flex-col gap-3 rounded-lg bg-slate-900 p-6">
+        <div class="flex flex-row items-center gap-2">
+          <input
+            type="text"
+            x-model="sysexData"
+            class="input focusable cursor-text rounded border border-slate-500 font-mono text-white"
+          />
+          <button class="button focusable" x-on:click="sendSysex">Send</button>
+        </div>
+
+        <div class="rounded bg-slate-800 text-sm text-slate-400">
+          <pre class="p-2" x-text="sysexData.toUpperCase()"></pre>
+        </div>
+      </div>
+
+      <template x-if="parameters != null">
         <div class="mb-12 grid grid-cols-2 gap-6">
           <!-- MIDI Channel Select Section -->
           <section class="rounded-lg bg-slate-900 p-6">

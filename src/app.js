@@ -3,6 +3,7 @@
 // const SYSEX_CONVERT_SE_TO_VANILLA = "F0 00 20 6B 04 01 46 01 3E 00 F7";
 
 import {
+  bytesToHex,
   bytesToVersion,
   extractHexSlice,
   formatMIDIMessage,
@@ -13,6 +14,24 @@ import {
 } from "@/utils.js";
 
 export default () => ({
+  messageCounter: 0,
+  sysexData: "f0 00 20 6b 04 00 01 03 01 00 00 00 f7",
+
+  parameterMap: {
+    sendChannel: { sysexParam: 0x07, valueMap: (v) => v - 1 },
+    receiveChannel: {
+      sysexParam: 0x05,
+      valueMap: (v) => (v === 17 ? 16 : v - 1),
+    },
+    audioInThreshold: { sysexParam: 0x09, valueMap: { 0: 0, 42: 1, 84: 2 } },
+    lfoRetrigMode: { sysexParam: 0x0f, valueMap: { 0: 0, 64: 1 } },
+    aftertouchCurve: { sysexParam: 0x13, valueMap: { 0: 0, 42: 1, 83: 2 } },
+    velocityCurve: { sysexParam: 0x11, valueMap: { 0: 0, 42: 1, 84: 2 } },
+    envLegatoMode: { sysexParam: 0x0d, valueMap: { 0: 1, 64: 0 } },
+    notePriority: { sysexParam: 0x0b, valueMap: { 0: 0, 42: 1, 84: 2 } },
+    syncSource: { sysexParam: 0x33, valueMap: { 0: 0, 42: 2, 84: 1 } },
+  },
+
   parameters: {
     receiveChannel: {
       cc: 102,
@@ -123,6 +142,7 @@ export default () => ({
   paramValues: {},
   midiInputs: [],
   midiOutputs: [],
+  selectedChannel: 0,
   selectedInput: "",
   selectedOutput: "",
   midiAccess: null,
@@ -357,11 +377,15 @@ export default () => ({
     this.midiOutputs = Array.from(this.midiAccess.outputs.values());
 
     // Auto-select MiniBrute devices
-    const miniBruteInput = this.midiInputs.find((device) =>
-      device.name.toLowerCase().includes("minibrute"),
+    const miniBruteInput = this.midiInputs.find(
+      (device) =>
+        device.name.toLowerCase().includes("minibrute") ||
+        device.name.toLowerCase().includes("updater"),
     );
-    const miniBruteOutput = this.midiOutputs.find((device) =>
-      device.name.toLowerCase().includes("minibrute"),
+    const miniBruteOutput = this.midiOutputs.find(
+      (device) =>
+        device.name.toLowerCase().includes("minibrute") ||
+        device.name.toLowerCase().includes("updater"),
     );
 
     if (miniBruteInput && this.selectedInput !== miniBruteInput.id) {
@@ -379,6 +403,7 @@ export default () => ({
 
     this.logToWindow(error, "error");
   },
+
 
   handleInputChange() {
     const selectedDevice = this.midiInputs.find(
@@ -534,7 +559,83 @@ export default () => ({
   },
 
   handleParamChange(param, value) {
-    return;
-    // TODO: implement
+    const paramInfo = this.parameterMap[param];
+    if (!paramInfo) {
+      this.logToWindow(`Unknown parameter: ${param}`, "error");
+      return;
+    }
+
+    const sysexParam = paramInfo.sysexParam;
+    let sysexValue;
+
+    if (typeof paramInfo.valueMap === "function") {
+      sysexValue = paramInfo.valueMap(Number(value));
+    } else {
+      sysexValue = paramInfo.valueMap[value];
+    }
+
+    if (sysexValue === undefined) {
+      this.logToWindow(
+        `Invalid value for parameter ${param}: ${value}`,
+        "error",
+      );
+      return;
+    }
+
+    this.sendParameterSysEx(sysexParam, sysexValue);
+  },
+
+  sendSysex() {
+    const output = this.midiOutputs.find(
+      (device) => device.id === this.selectedOutput,
+    );
+    // F0 7E 7F 06 01 F7
+    const sysexMessage = this.sysexData.split(" ").map((n) => parseInt(n, 16));
+
+    // F0 7E 06 02 00 20 6B 04 00 01 03 01 00 00 00 F7
+    this.logToWindow("Sending: " + bytesToHex(sysexMessage), "info");
+
+    try {
+      output.send(sysexMessage);
+    } catch (error) {
+      this.logToWindow(`Error sending MIDI message: ${error.message}`, "error");
+    }
+  },
+
+  sendParameterSysEx(param, value) {
+    const output = this.midiOutputs.find(
+      (device) => device.id === this.selectedOutput,
+    );
+
+    if (!output) {
+      this.logToWindow("No MIDI output selected", "error");
+      return;
+    }
+
+    // Increment the message counter, wrapping around at 0x7F
+    this.messageCounter = (this.messageCounter + 1) & 0x7f;
+
+    // F0 7E 7F 06 01 F7
+    const sysexMessage = [
+      0xf0, // SysEx start
+      0x00,
+      0x20,
+      0x6b, // Arturia manufacturer ID
+      0x04,
+      0x00, // Hardcoded values
+      this.messageCounter++, // Message counter
+      param, // Parameter to change
+      value, // Parameter value
+      0xf7, // SysEx end
+    ];
+
+    // F0 7E 06 02 00 20 6B 04 00 01 03 01 00 00 00 F7
+    this.logToWindow("Sending: " + bytesToHex(sysexMessage), "info");
+
+    try {
+      output.send(sysexMessage);
+    } catch (error) {
+      this.logToWindow(`Error sending MIDI message: ${error.message}`, "error");
+    }
   },
 });
