@@ -165,6 +165,17 @@ export default () => ({
     }, duration);
   },
 
+  getDetailedSequences() {
+    return this.sequences.map((sequence, index) => {
+      return {
+        raw: sequence,
+        string: sequence.replace(/x/g, "-"),
+        index: index + 1,
+        notes: this.getNoteRange(sequence),
+      };
+    });
+  },
+
   getNoteRange(sequence) {
     const notes = sequence
       .split(" ")
@@ -191,17 +202,28 @@ export default () => ({
     for (let i = maxNote; i >= minNote; i--) {
       const octave = Math.floor(i / 12) - 1;
       const noteName = noteNames[i % 12];
-      range.push({ midi: i, label: `${noteName}${octave}` });
+      range.push({
+        midi: i,
+        label: `${noteName}${octave}`,
+        key: noteName,
+        isBlack: noteName.includes("#"),
+        isWhite: !noteName.includes("#"),
+      });
     }
     return range;
   },
 
   getSequenceNotes(sequence) {
-    return sequence.split(" ").map((note, index) => ({
-      step: index + 1,
-      note: note === "x" ? null : Number(note),
-      label: midiToNoteName(note),
-    }));
+    return sequence.split(" ").map((note, index) => {
+      const label = midiToNoteName(note);
+      return {
+        step: index + 1,
+        note: note === "x" ? null : Number(note),
+        label: label === "x" ? null : label,
+        isWhite: note === "x" ? false : label.includes("#"),
+        isBlack: note === "x" ? false : !label.includes("#"),
+      };
+    });
   },
 
   logToWindow(message, type = "info") {
