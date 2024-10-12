@@ -182,7 +182,7 @@ export default () => ({
         .map(Number),
     );
     const minNoteWithOctave = this.getMinNoteWithOctave(sequence);
-    return Math.max(minNoteWithOctave + 11, maxNote);
+    return Math.max(minNoteWithOctave + 12, maxNote);
   },
 
   getNoteRange(sequence) {
@@ -449,7 +449,7 @@ export default () => ({
         ) {
           if (data === 0xfe) {
             // Active Sensing message, ignore
-          return;
+            return;
           }
 
           this.logToWindow("Received non-Sysex message: " + data, "debug");

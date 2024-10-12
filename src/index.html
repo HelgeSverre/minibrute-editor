@@ -62,6 +62,15 @@
           </template>
 
           <div class="button-group">
+            <select class="input focusable w-40 !bg-slate-900">
+              <option selected value="" disabled>Change to</option>
+              <option value="se">MiniBrute SE (Step Sequencer)</option>
+              <option value="vanilla">MiniBrute Original (Arpeggiator)</option>
+            </select>
+            <button class="button focusable">Convert</button>
+          </div>
+
+          <div class="button-group">
             <button x-on:click="identify" class="button focusable">
               Identify
             </button>
@@ -104,7 +113,7 @@
         </nav>
       </header>
 
-      <template x-if="parameters != null">
+      <template x-if="false &&  parameters != null">
         <div class="mb-12 grid grid-cols-2 gap-6">
           <!-- MIDI Channel Select Section -->
           <section class="rounded-lg bg-slate-900 p-6">
