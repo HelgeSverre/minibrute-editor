@@ -347,9 +347,9 @@
                 :key="`sequence-${sequence.index}`"
               >
                 <div class="rounded-lg bg-slate-800 p-4">
-                  <div class="flex flex-row items-center justify-between">
+                  <div class="mb-2 flex flex-row items-center justify-between">
                     <h3
-                      class="mb-2 text-lg font-medium"
+                      class="text-sm font-medium leading-none text-slate-200"
                       x-text="`Sequence ${sequence.index}`"
                     ></h3>
 
@@ -360,7 +360,7 @@
                   </div>
 
                   <div
-                    class="relative overflow-y-auto rounded-lg border border-slate-700 bg-slate-900"
+                    class="relative h-60 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900"
                   >
                     <div class="flex">
                       <div
@@ -368,7 +368,7 @@
                       >
                         <template x-for="note in sequence.notes">
                           <div
-                            class="h-4 border-b border-slate-700 px-1 text-left font-mono text-[10px] text-slate-500"
+                            class="h-4 border-b border-r border-slate-700 px-1.5 text-right font-mono text-[10px] font-light text-slate-400"
                             :class="{
                               'bg-slate-900': note.isBlack,
                               'bg-slate-800/50': note.isWhite,
@@ -381,10 +381,10 @@
                       <div class="flex-grow">
                         <template x-for="note in sequence.notes">
                           <div
-                            class="flex h-4 border-b border-slate-950"
+                            class="flex h-4"
                             :class="{
-                              'bg-slate-900': note.isBlack,
-                              'bg-slate-800/50': note.isWhite,
+                              'bg-slate-900/10': note.isBlack,
+                              'bg-slate-800/30': note.isWhite,
                               '!bg-white/10': note.midi === 60
                             }"
                           >
@@ -394,10 +394,10 @@
                               <div class="w-6 flex-shrink-0">
                                 <template x-if="seqNote.note === note.midi">
                                   <div
-                                    class="flex h-full items-center justify-center bg-blue-400 outline outline-1 outline-slate-900"
+                                    class="-mx-px flex h-full items-center justify-center bg-amber-300 ring-1 ring-inset ring-slate-900"
                                   >
                                     <span
-                                      class="block text-center text-[10px] font-bold text-black"
+                                      class="block text-center text-[10px] font-bold leading-none text-black"
                                       x-text="seqNote.step"
                                     ></span>
                                   </div>

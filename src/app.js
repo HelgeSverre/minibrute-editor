@@ -169,7 +169,6 @@ export default () => ({
     return this.sequences.map((sequence, index) => {
       return {
         raw: sequence,
-        string: sequence.replace(/x/g, "-"),
         index: index + 1,
         notes: this.getNoteRange(sequence),
       };
@@ -177,10 +176,11 @@ export default () => ({
   },
 
   getNoteRange(sequence) {
-    const notes = sequence
+    let notes = sequence
       .split(" ")
       .filter((n) => n !== "x")
       .map(Number);
+
     const minNote = Math.min(...notes);
     const maxNote = Math.max(...notes);
     const noteNames = [
