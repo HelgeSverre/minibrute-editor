@@ -1,3 +1,4 @@
+// Credits to Hackabrute for these Sysex strings - https://hackabrute.yusynth.net/MINIBRUTE/standard2SE_en.html
 // const SYSEX_CONVERT_VANILLA_TO_SE = "F0 00 20 6B 04 01 75 01 3E 01 F7";
 // const SYSEX_CONVERT_SE_TO_VANILLA = "F0 00 20 6B 04 01 46 01 3E 00 F7";
 
@@ -131,7 +132,7 @@ export default () => ({
     clearLog() {
       this.logMessages = [];
 
-      this.logToWindow(`[DEBUG] ---------- Cleared log ----------`, "info");
+    this.logToWindow(`Cleared log messages`, "comment");
     },
 
     // TODO: For debugging only
@@ -242,20 +243,23 @@ export default () => ({
     init() {
       if (navigator.requestMIDIAccess) {
         navigator
-          .requestMIDIAccess({
-            sysex: true,
-          })
+        .requestMIDIAccess({ sysex: true })
           .then(this.onMIDISuccess.bind(this), this.onMIDIFailure.bind(this));
       } else {
         this.logToWindow("WebMIDI is not supported in this browser.", "error");
       }
 
-      // Initialize paramValues with default values
-      for (const [name, param] of Object.entries(this.parameters)) {
-        this.paramValues[name] = param.options
-          ? param.options[0]
-          : param.min || 0;
-      }
+    this.$watch("consoleOpen", (value) => {
+      localStorage.setItem("state:consoleOpen", JSON.stringify(value));
+    });
+    this.consoleOpen = localStorage.getItem("state:consoleOpen") === "true";
+
+    this.$watch("sequences", (value) => {
+      localStorage.setItem("state:sequences", JSON.stringify(value));
+    });
+
+    this.sequences =
+      JSON.parse(localStorage.getItem("state:sequences")) || this.sequences;
     },
 
     onMIDISuccess(midiAccess) {
@@ -270,6 +274,8 @@ export default () => ({
       for (let input of midiAccess.inputs.values()) {
         input.onmidimessage = this.onMIDIMessage.bind(this);
       }
+
+    this.identify();
     },
 
     onMIDIMessage(event) {
@@ -325,15 +331,18 @@ export default () => ({
     },
 
     identify() {
-      if (this.consoleOpen === false) {
-        this.consoleOpen = true;
-      }
-
       const output = this.midiOutputs.find(
         (device) => device.id === this.selectedOutput,
       );
       if (output) {
-        output.send(identityRequest);
+      try {
+        output.send(SYSEX_IDENTITY_REQUEST);
+      } catch (error) {
+        this.logToWindow(
+          `Error sending MIDI message: ${error.message}`,
+          "error",
+        );
+      }
         this.logToWindow("Sent Identity Request", "info");
       } else {
         this.logToWindow("No MIDI output selected", "warning");
@@ -362,8 +371,10 @@ export default () => ({
       }
     },
 
-    onMIDIFailure() {
-      this.logToWindow("Could not access your MIDI devices.", "error");
+  onMIDIFailure(error) {
+    this.logToWindow("Could not access your MIDI devices:", "alert");
+
+    this.logToWindow(error, "error");
     },
 
     handleInputChange() {
