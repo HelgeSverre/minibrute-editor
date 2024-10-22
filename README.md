@@ -1,5 +1,9 @@
 # 🎹 MiniBrute Editor
 
+#  ⚠️⚠️⚠️⚠️ **NOTE**: THIS IS NOT READY FOR REAL-WORLD USAGE, DO NOT USE THIS, IT CAN BRICK YOUR DEVICE   ⚠️⚠️⚠️⚠️
+
+> If you get stuck in "bootloader" mode, open [MIDI Control Center](https://www.arturia.com/technology/mcc) it can fix that issue.
+
 <a href="https://minibrute-editor.vercel.app"><img src="https://img.shields.io/badge/Try%20it-Live-%23FADE6A.svg?style=for-the-badge"></a>
 
 A web-based editor for the Arturia MiniBrute synthesizer (original and SE). It allows you to edit the MiniBrute's
